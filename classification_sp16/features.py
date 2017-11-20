@@ -52,10 +52,62 @@ def enhancedFeatureExtractor(datum):
     features = basicFeatureExtractor(datum)
 
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    one_hot_encoding = getConnectedWhiteRegions(datum)
+    enhancedFeatures = np.concatenate((features, one_hot_encoding), axis=0)
+    return enhancedFeatures
 
-    return features
+def getConnectedWhiteRegions(datum):
+    """
+    Method to get number of white connected regions for a given image.
 
+    Args:
+        datum: 2-dimensional numpy.array representing a single image.
+
+    Returns:
+        One-hot encoded vector, the index of set bit representing the number of white connected 
+            regions in a given image.
+    """
+    datum = datum.reshape((DIGIT_DATUM_WIDTH, DIGIT_DATUM_HEIGHT))
+    datum = samples.Datum(samples.convertToTrinary(datum), DIGIT_DATUM_WIDTH, DIGIT_DATUM_HEIGHT)
+    img = datum.getPixels()
+
+    visited = [[False for j in range(DIGIT_DATUM_HEIGHT)] for i in range(DIGIT_DATUM_HEIGHT)]
+    counter = 0
+    for i in range(len(img)):
+        for j in range(len(img[i])):
+            if img[i][j] == 0 and not visited[i][j]:
+                visited = dfs(img, visited, i, j)
+                counter += 1;
+
+    # print datum
+    # print counter
+    if counter > 3:
+        counter = 3
+    one_hot_encoding = [0, 0, 0]
+    one_hot_encoding[counter-1] = 1
+
+    return one_hot_encoding
+
+def isSafe(img, visited, row, col):
+    return (row >= 0 and row < DIGIT_DATUM_WIDTH and
+            col >= 0 and col < DIGIT_DATUM_HEIGHT and
+            img[row][col] == 0 and not visited[row][col])
+
+def dfs(img, visited, row, col):
+    """
+    Depth-first search on image to find connected components.
+
+    Args:
+        img: 2-dimensional numpy.array representing a single image.
+        visited: python list maintaining visited nodes.
+    """
+    adjRows = [-1, -1, -1, 0, 0, 1, 1, 1]
+    adjCols = [-1, 0, 1, -1, 1, -1, 0, 1]
+    visited[row][col] = True
+    for i in range(8):
+        if isSafe(img, visited, row + adjRows[i], col + adjCols[i]):
+            visited = dfs(img, visited, row + adjRows[i], col + adjCols[i])
+    return visited
 
 def analysis(model, trainData, trainLabels, trainPredictions, valData, valLabels, validationPredictions):
     """
@@ -83,7 +135,7 @@ def analysis(model, trainData, trainLabels, trainPredictions, valData, valLabels
     # Example of use:
     # for i in range(len(trainPredictions)):
     #     prediction = trainPredictions[i]
-    #     truth = trainLabels[i]
+    #     t ruth = trainLabels[i]
     #     if (prediction != truth):
     #         print "==================================="
     #         print "Mistake on example %d" % i
@@ -111,6 +163,8 @@ def print_features(features):
     print(str)
 
 def print_digit(pixels):
+    import pdb
+    pdb.set_trace()
     width = DIGIT_DATUM_WIDTH
     height = DIGIT_DATUM_HEIGHT
     pixels = pixels[:width*height]

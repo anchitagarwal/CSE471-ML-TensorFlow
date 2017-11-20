@@ -213,6 +213,8 @@ def _test():
     doctest.testmod() # Test the interactive sessions in function comments
     train_data = datasets.tinyMnistDataset()[0]
     for i, datum in enumerate(train_data):
+        import pdb
+        pdb.set_trace()
         image_size = int(np.sqrt(datum.shape[-1]))
         datum = datum.reshape((image_size, image_size))
         item = Datum(convertToTrinary(datum), image_size, image_size)
